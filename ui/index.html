@@ -96,6 +96,23 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
   padding:9px 4px;border-bottom:1px solid var(--hair);font-size:13px;}
 .empty-note{color:var(--ink-40);font-size:13px;padding:22px;text-align:center;}
 @media(max-width:900px){.market{grid-template-columns:1fr;}}
+
+/* ── 稽核 ── */
+.audit{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;}
+.scrolly{max-height:64vh;overflow-y:auto;}
+.feed{list-style:none;margin:0;padding:0;font-size:12.5px;max-height:64vh;overflow-y:auto;}
+.feed li{padding:8px 4px;border-bottom:1px solid var(--hair);}
+.feed .nm{color:var(--ink-90);font-weight:600;margin-right:6px;}
+.feed .ts{color:var(--ink-40);float:right;}
+.feed .dt{color:var(--ink-50);display:block;margin-top:2px;}
+.hashes{display:flex;flex-direction:column;gap:10px;margin:14px 0;}
+.hashes .row b{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-40);margin-bottom:4px;}
+.hashes .val{font-size:12.5px;word-break:break-all;}
+.verdict{padding:10px 14px;border-radius:12px;font-size:14px;font-weight:600;}
+.verdict.ok{color:var(--lg-accent);border:1px solid var(--lg-accent);}
+.verdict.bad{color:#ff7a7a;border:1px solid #ff7a7a;}
+.hash-ok{color:var(--lg-accent);} .hash-bad{color:#ff7a7a;}
+@media(max-width:900px){.audit{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -178,7 +195,22 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
         </div>
       </div>
     </section>
-    <section class="page" id="page-audit"><!-- Task 6 --></section>
+    <section class="page" id="page-audit">
+      <div class="audit">
+        <div class="lg lg-card anim" data-lg>
+          <div class="eyebrow"><span class="dot"></span><span class="lbl">SU 帳本全表</span><span class="tag" id="audit-tag">0 筆</span></div>
+          <div class="scrolly" data-lg-scroll-edge="both">
+            <table class="hairline"><thead><tr>
+              <th>#</th><th>船舶</th><th>噸</th><th>持有者</th><th>狀態</th><th>用途</th><th></th>
+            </tr></thead><tbody id="su-tbody"></tbody></table>
+          </div>
+        </div>
+        <div class="lg lg-card anim" data-lg>
+          <div class="eyebrow"><span class="dot"></span><span class="lbl">事件流</span><span class="tag">on-chain events</span></div>
+          <ul class="feed" id="event-feed" data-lg-scroll-edge="both"></ul>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- modals（Task 3–6 追加於此） -->
@@ -238,6 +270,16 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
           <button class="lg lg-btn" data-lg data-lg-close>取消</button>
           <button class="lg lg-btn lg-btn--primary" data-lg id="btn-retire-go">確認除役</button>
+        </div>
+      </div>
+    </div>
+    <div class="lg-modal" id="m-verify">
+      <div class="lg-modal__overlay" data-lg-close></div>
+      <div class="lg-modal__panel lg" data-lg role="dialog" aria-label="防竄改驗證" style="max-width:34rem">
+        <div class="eyebrow"><span class="dot"></span><span class="lbl">防竄改驗證</span><span class="tag mono" id="verify-token">SU #-</span></div>
+        <div id="verify-body"><p style="color:var(--ink-50)">驗證中——讀取鏈上 dataHash 並對鏈下明細重算 keccak…</p></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px">
+          <button class="lg lg-btn" data-lg data-lg-close>關閉</button>
         </div>
       </div>
     </div>
@@ -533,6 +575,61 @@ document.getElementById("btn-retire-go").addEventListener("click", async e=>{
     await refresh();
   }catch(_){}
   setBusy(e.target, false);
+});
+
+/* ── 稽核 ── */
+const EVENT_TEXT = {
+  Issued:  d => `發行予航商 · ${fmt(d.amount)} t`,
+  Listed:  d => `掛單 ${fmt(d.price/1e6)} mUSD`,
+  Sold:    d => `買家以 ${fmt(d.price/1e6)} mUSD 購入`,
+  Unlisted:() => "撤下掛單",
+  Retired: d => `除役用途 ${d.purpose}`,
+};
+function renderAudit(){
+  document.getElementById("audit-tag").textContent = fmt(S.sus.length)+" 筆";
+  document.getElementById("su-tbody").innerHTML = S.sus.map(u=>`
+    <tr>
+      <td class="mono">${u.token_id}</td>
+      <td class="mono">${imo(u.ship_id)}</td>
+      <td class="mono gold">${fmt(u.amount)}</td>
+      <td>${u.owner_role ?? "-"}</td>
+      <td><span class="pill ${u.status}">${u.status}</span></td>
+      <td style="color:var(--ink-50)">${u.purpose_name ?? "-"}</td>
+      <td><button class="lg lg-btn lg-btn--sm" data-lg data-token="${u.token_id}"
+        data-lg-open="#m-verify" data-needs-backend>驗證</button></td>
+    </tr>`).join("");
+  document.getElementById("event-feed").innerHTML = S.events.map(e=>{
+    let d = {}; try{ d = JSON.parse(e.detail); }catch(_){}
+    const txt = (EVENT_TEXT[e.name] || (()=>e.detail))(d);
+    return `<li><span class="ts mono">${e.ts}</span><span class="nm">${e.name}</span>
+      <span class="mono" style="color:var(--ink-50)">SU #${e.token_id}</span>
+      <span class="dt">${txt}</span></li>`;
+  }).join("");
+  ensureEntered("page-audit");
+}
+
+/* verify：開 modal 即打 API */
+document.addEventListener("click", async e=>{
+  const t = e.target.closest('[data-lg-open="#m-verify"][data-token]');
+  if (!t) return;
+  const id = Number(t.dataset.token);
+  document.getElementById("verify-token").textContent = "SU #"+id;
+  const body = document.getElementById("verify-body");
+  body.innerHTML = `<p style="color:var(--ink-50)">驗證中——讀取鏈上 dataHash 並對鏈下明細重算 keccak…</p>`;
+  try{
+    const v = await api("/verify/"+id);
+    const cls = v.match ? "hash-ok" : "hash-bad";
+    body.innerHTML = `
+      <div class="verdict ${v.match ? "ok" : "bad"}">${v.match ? "MATCH — 鏈下明細未遭竄改" : "MISMATCH — 鏈下明細與鏈上指紋不符"}</div>
+      <div class="hashes mono">
+        <div class="row"><b>on-chain dataHash</b><span class="val">${v.onchain_hash ?? "-"}</span></div>
+        <div class="row"><b>recomputed keccak</b><span class="val ${cls}">${v.recomputed_hash ?? "-"}</span></div>
+        <div class="row"><b>off-chain uri</b><span class="val" style="color:var(--ink-50)">${v.uri ?? "-"}</span></div>
+      </div>
+      ${v.detail ? `<p style="font-size:12.5px;color:var(--ink-50)">${v.detail}</p>` : ""}`;
+  }catch(err){
+    body.innerHTML = `<p style="color:#ff7a7a">驗證失敗：${err.message}</p>`;
+  }
 });
 </script>
 </body>
