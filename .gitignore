@@ -1,0 +1,23 @@
+# --- 內部工作文件（暫不公開，只推 README.md）---
+CLAUDE.md
+HANDOFF.md
+碳權代幣化PoC_實作規劃_v2.md
+碳權代幣化PoC_實作教學書.md
+
+# --- 相依與建置產物 ---
+node_modules/
+artifacts/
+cache/
+.venv/
+__pycache__/
+
+# --- 機密與環境 ---
+.env
+
+# --- 執行期產物 ---
+data/out/
+backend/*.db
+shared/contracts.*.json
+
+# --- 作業系統 ---
+.DS_Store
