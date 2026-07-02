@@ -84,6 +84,18 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
 .gauges{display:flex;flex-direction:column;gap:16px;justify-content:space-between;}
 .lg-stat__value{letter-spacing:-.03em;}
 @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}.duo{grid-template-columns:1fr;}}
+
+/* ── 市場 ── */
+.market{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;}
+.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.su-card .lg-card__title{display:flex;justify-content:space-between;align-items:baseline;}
+.su-card .price{font-size:20px;letter-spacing:-.02em;}
+.su-card .meta-row{display:flex;justify-content:space-between;color:var(--ink-50);font-size:12px;margin:2px 0;}
+.side-list{list-style:none;margin:0;padding:0;}
+.side-list li{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:9px 4px;border-bottom:1px solid var(--hair);font-size:13px;}
+.empty-note{color:var(--ink-40);font-size:13px;padding:22px;text-align:center;}
+@media(max-width:900px){.market{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -147,7 +159,25 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
         </div>
       </div>
     </section>
-    <section class="page" id="page-market"><!-- Task 4 --></section>
+    <section class="page" id="page-market">
+      <div class="market">
+        <div>
+          <div class="eyebrow anim"><span class="dot"></span><span class="lbl">掛單牆</span><span class="tag" id="wall-tag">0 筆掛單中</span></div>
+          <div class="wall" id="listing-wall"></div>
+          <div class="empty-note" id="wall-empty">尚無掛單——從右側「航商持有」上架第一張 SU。</div>
+        </div>
+        <div>
+          <div class="lg lg-card anim" data-lg style="margin-bottom:14px">
+            <div class="eyebrow"><span class="dot"></span><span class="lbl">航商持有</span><span class="tag" id="held-ship-tag">0</span></div>
+            <ul class="side-list" id="held-shipping"></ul>
+          </div>
+          <div class="lg lg-card anim" data-lg>
+            <div class="eyebrow"><span class="dot"></span><span class="lbl">買家持有</span><span class="tag" id="held-buyer-tag">0</span></div>
+            <ul class="side-list" id="held-buyer"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
     <section class="page" id="page-audit"><!-- Task 6 --></section>
   </main>
 
@@ -163,6 +193,33 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
           <button class="lg lg-btn" data-lg data-lg-close>取消</button>
           <button class="lg lg-btn lg-btn--primary" data-lg id="btn-issue-go">確認發行</button>
+        </div>
+      </div>
+    </div>
+    <div class="lg-modal" id="m-list">
+      <div class="lg-modal__overlay" data-lg-close></div>
+      <div class="lg-modal__panel lg" data-lg role="dialog" aria-label="上架 SU">
+        <div class="eyebrow"><span class="dot"></span><span class="lbl">上架掛單</span><span class="tag">以航商身分</span></div>
+        <p class="mono" id="list-summary" style="color:var(--ink-60);font-size:13px"></p>
+        <div class="lg-field"><div class="lg lg-field__box" data-lg>
+          <input id="list-price" class="lg-field__input" type="number" min="1" step="1" value="300" placeholder=" ">
+          <label for="list-price" class="lg-field__label">售價（mUSD）</label>
+        </div><span class="lg-field__hint">整數 mUSD；上架前後端會自動 approve</span></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+          <button class="lg lg-btn" data-lg data-lg-close>取消</button>
+          <button class="lg lg-btn lg-btn--primary" data-lg id="btn-list-go">確認上架</button>
+        </div>
+      </div>
+    </div>
+    <div class="lg-modal" id="m-buy">
+      <div class="lg-modal__overlay" data-lg-close></div>
+      <div class="lg-modal__panel lg" data-lg role="dialog" aria-label="購買 SU">
+        <div class="eyebrow"><span class="dot"></span><span class="lbl">購買確認</span><span class="tag">以買家身分</span></div>
+        <p class="mono" id="buy-summary" style="color:var(--ink-60);font-size:13px"></p>
+        <p style="font-size:13px;color:var(--ink-50)">將以 mUSD 原子交割（付款 + safeTransferFrom）。此轉讓為該 SU 唯一一次合法轉讓（transfer-once）。</p>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px">
+          <button class="lg lg-btn" data-lg data-lg-close>取消</button>
+          <button class="lg lg-btn lg-btn--primary" data-lg id="btn-buy-go">確認購買</button>
         </div>
       </div>
     </div>
@@ -329,6 +386,101 @@ document.getElementById("btn-issue-go").addEventListener("click", async e=>{
     const r = await api("/pipeline", {});
     toastOk("批次發行完成", `已鑄造 ${fmt(r.issued)} 筆 / ${fmt(r.total_tonnes)} 噸`);
     document.querySelector("#m-issue [data-lg-close]").click();
+    await refresh();
+  }catch(_){}
+  setBusy(e.target, false);
+});
+
+/* ── 市場 ── */
+const wallCards = new Map();   // token_id -> card el
+function cardFor(u){
+  const el = document.createElement("div");
+  el.className = "lg lg-card su-card";
+  el.setAttribute("data-lg","");
+  el.innerHTML = `
+    <h4 class="lg-card__title"><span>SU #${u.token_id}</span><span class="lg-chip">航商掛單</span></h4>
+    <div class="meta-row"><span>船舶</span><span class="mono">${imo(u.ship_id)}</span></div>
+    <div class="meta-row"><span>減碳量</span><span class="mono gold" data-f="amount">${fmt(u.amount)} t</span></div>
+    <div class="meta-row"><span>dataHash</span><span class="mono">${shortHash(u.data_hash)}</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <span class="price mono gold" data-f="price"></span>
+      <button class="lg lg-btn lg-btn--sm lg-btn--accent" data-lg data-token="${u.token_id}"
+        data-lg-open="#m-buy" data-needs-backend>購買</button>
+    </div>`;
+  return el;
+}
+function renderMarket(){
+  const listed = S.sus.filter(u=>u.status==="listed");
+  const wall = document.getElementById("listing-wall");
+  const seen = new Set();
+  let added = false;
+  listed.forEach(u=>{
+    seen.add(u.token_id);
+    let el = wallCards.get(u.token_id);
+    if (!el){
+      el = cardFor(u); wallCards.set(u.token_id, el); wall.appendChild(el);
+      LiquidGlass.attach(el); el.querySelectorAll("[data-lg]").forEach(c=>LiquidGlass.attach(c));
+      added = true;
+    }
+    const p = S.prices[u.token_id];
+    el.querySelector('[data-f="price"]').textContent = p !== undefined ? fmt(p)+" mUSD" : "— mUSD";
+  });
+  [...wallCards.keys()].filter(id=>!seen.has(id)).forEach(id=>{ wallCards.get(id).remove(); wallCards.delete(id); });
+  if (added) scheduleRevive();
+  document.getElementById("wall-tag").textContent = listed.length + " 筆掛單中";
+  document.getElementById("wall-empty").hidden = listed.length > 0;
+
+  renderSide("held-shipping","held-ship-tag",
+    S.sus.filter(u=>u.status==="held" && u.owner_role==="shipping"),
+    u=>`<button class="lg lg-btn lg-btn--sm" data-lg data-token="${u.token_id}" data-lg-open="#m-list" data-needs-backend>上架</button>`);
+  renderSide("held-buyer","held-buyer-tag",
+    S.sus.filter(u=>u.status==="held" && u.owner_role==="buyer"),
+    u=>`<button class="lg lg-btn lg-btn--sm lg-btn--accent" data-lg data-token="${u.token_id}" data-lg-open="#m-retire" data-needs-backend>除役</button>`);
+  ensureEntered("page-market");
+}
+function renderSide(listId, tagId, items, btnHtml){
+  document.getElementById(tagId).textContent = items.length;
+  document.getElementById(listId).innerHTML = items.length
+    ? items.map(u=>`<li><span class="mono">#${u.token_id} ${imo(u.ship_id)}</span>
+        <span class="mono" style="color:var(--ink-50)">${fmt(u.amount)} t</span>${btnHtml(u)}</li>`).join("")
+    : `<li style="border:none;color:var(--ink-40)">（無）</li>`;
+}
+
+/* 開 modal 時帶入 SU 摘要 */
+document.addEventListener("click", e=>{
+  const t = e.target.closest("[data-lg-open]");
+  if (!t || t.dataset.token === undefined) return;
+  const u = S.sus.find(x=>x.token_id === Number(t.dataset.token));
+  if (!u) return;
+  const sum = `SU #${u.token_id} · ${imo(u.ship_id)} · ${fmt(u.amount)} t`;
+  if (t.dataset.lgOpen === "#m-list") document.getElementById("list-summary").textContent = sum;
+  if (t.dataset.lgOpen === "#m-buy"){
+    const p = S.prices[u.token_id];
+    document.getElementById("buy-summary").textContent =
+      sum + " · 總價 " + (p !== undefined ? fmt(p)+" mUSD" : "（依鏈上掛單價）");
+  }
+});
+
+document.getElementById("btn-list-go").addEventListener("click", async e=>{
+  if (S.busy || S.ctxToken === null) return;
+  const price = parseInt(document.getElementById("list-price").value, 10);
+  if (!Number.isInteger(price) || price <= 0){ toastErr(new Error("售價需為正整數 mUSD")); return; }
+  setBusy(e.target, true);
+  try{
+    await api("/list", {token_id:S.ctxToken, price});
+    toastOk("已上架", `SU #${S.ctxToken} 掛單 ${fmt(price)} mUSD`);
+    document.querySelector("#m-list [data-lg-close]").click();
+    await refresh();
+  }catch(_){}
+  setBusy(e.target, false);
+});
+document.getElementById("btn-buy-go").addEventListener("click", async e=>{
+  if (S.busy || S.ctxToken === null) return;
+  setBusy(e.target, true);
+  try{
+    await api("/buy", {token_id:S.ctxToken});
+    toastOk("交易完成", `SU #${S.ctxToken} 已由買家購入（transfer-once 已用畢）`);
+    document.querySelector("#m-buy [data-lg-close]").click();
     await refresh();
   }catch(_){}
   setBusy(e.target, false);
