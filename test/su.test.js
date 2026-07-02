@@ -70,6 +70,8 @@ describe("SurplusUnit + Market", function () {
     expect(await su.transferCount(0)).to.equal(1);
     await su.connect(buyer).approve(await market.getAddress(), 0);
     await market.connect(buyer).list(0, price);
-    await expect(market.connect(shipping).buy(0)).to.be.reverted; // 買家沒錢也沒授權;重點是若有人買會撞到 transfer-once
+    // 讓賣家(shipping)這次有錢又有授權，確保 revert 是撞到 transfer-once，而非付款失敗
+    await coin.connect(shipping).approve(await market.getAddress(), price);
+    await expect(market.connect(shipping).buy(0)).to.be.revertedWith("SU: transfer once only");
   });
 });

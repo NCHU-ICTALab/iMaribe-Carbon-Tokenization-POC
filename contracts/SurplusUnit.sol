@@ -2,12 +2,12 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @title 剩餘配額單位 SU（對照 IMO NZF Surplus Units 的國內模擬憑證）
 /// @notice 四動作：發行 mint / 儲存(放著不動) / 轉讓一次 / 撤銷 burn
-contract SurplusUnit is ERC721, ERC721Burnable, AccessControl {
+/// @dev 刻意不繼承 ERC721Burnable：其 public burn() 會繞過 Retired(purpose) 稽核事件；除役一律走 retire()，內部用基底 _burn
+contract SurplusUnit is ERC721, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     uint256 private _nextId;
