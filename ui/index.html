@@ -129,8 +129,9 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
 @media(prefers-reduced-motion:reduce){.drawer__panel{transition:none;}}
 
 /* ── 稽核 ── */
-.audit{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;}
-.scrolly{max-height:64vh;overflow-y:auto;}
+.audit{display:flex;flex-direction:column;gap:16px;}
+.scrolly{max-height:48vh;overflow-y:auto;}
+.evchips{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap;}
 .feed{list-style:none;margin:0;padding:0;font-size:12.5px;max-height:64vh;overflow-y:auto;}
 .feed li{padding:8px 4px;border-bottom:1px solid var(--hair);}
 .feed .nm{color:var(--ink-90);font-weight:600;margin-right:6px;}
@@ -143,7 +144,6 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
 .verdict.ok{color:var(--lg-accent);border:1px solid var(--lg-accent);}
 .verdict.bad{color:#ff7a7a;border:1px solid #ff7a7a;}
 .hash-ok{color:var(--lg-accent);} .hash-bad{color:#ff7a7a;}
-@media(max-width:900px){.audit{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -241,8 +241,18 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
           </div>
         </div>
         <div class="lg lg-card anim" data-lg>
-          <div class="eyebrow"><span class="dot"></span><span class="lbl">事件流</span><span class="tag">on-chain events</span></div>
-          <ul class="feed" id="event-feed" data-lg-scroll-edge="both"></ul>
+          <div class="eyebrow"><span class="dot"></span><span class="lbl">事件表</span><span class="tag" id="ev-tag">0 則</span></div>
+          <div class="evchips" id="ev-chips">
+            <button class="fchip" data-ev="Issued">Issued</button>
+            <button class="fchip" data-ev="Listed">Listed</button>
+            <button class="fchip" data-ev="Sold">Sold</button>
+            <button class="fchip" data-ev="Retired">Retired</button>
+          </div>
+          <div class="scrolly" data-lg-scroll-edge="both">
+            <table class="hairline"><thead><tr>
+              <th>事件</th><th>SU</th><th>明細</th><th>時間</th>
+            </tr></thead><tbody id="ev-tbody"></tbody></table>
+          </div>
         </div>
       </div>
     </section>
@@ -386,7 +396,7 @@ function derivePrices(events){
 let pollTimer = null;
 async function refresh(){
   try{
-    const [st, ev] = await Promise.all([api("/state"), api("/events?limit=200")]);
+    const [st, ev] = await Promise.all([api("/state"), api("/events?limit=1000")]);
     S.sus = st.sus; S.roles = st.roles; S.events = ev; S.prices = derivePrices(ev);
     setOnline(true);
   }catch(_){ setOnline(false); }
@@ -774,6 +784,12 @@ const EVENT_TEXT = {
   Unlisted:() => "撤下掛單",
   Retired: d => `除役用途 ${d.purpose}`,
 };
+const EF = new Set();   // 空 = 全部（含 Unlisted）
+document.querySelectorAll("#ev-chips .fchip").forEach(b=>b.addEventListener("click", ()=>{
+  b.classList.toggle("is-on");
+  b.classList.contains("is-on") ? EF.add(b.dataset.ev) : EF.delete(b.dataset.ev);
+  renderAudit();
+}));
 function renderAudit(){
   const byShip = {};
   S.sus.forEach(u=>byShip[u.ship_id]=(byShip[u.ship_id]||0)+u.amount);
@@ -794,12 +810,15 @@ function renderAudit(){
       <td style="color:var(--ink-50)">${u.purpose_name ?? "-"}</td>
       <td><button class="lg lg-btn lg-btn--sm" data-lg data-open-drawer="${u.token_id}" data-needs-backend>驗證</button></td>
     </tr>`).join("");
-  document.getElementById("event-feed").innerHTML = S.events.map(e=>{
+  const evs = S.events.filter(e=>!EF.size || EF.has(e.name));
+  document.getElementById("ev-tag").textContent = fmt(evs.length) + " 則";
+  document.getElementById("ev-tbody").innerHTML = evs.map(e=>{
     let d = {}; try{ d = JSON.parse(e.detail); }catch(_){}
     const txt = (EVENT_TEXT[e.name] || (()=>e.detail))(d);
-    return `<li><span class="ts mono">${e.ts}</span><span class="nm">${e.name}</span>
-      <span class="mono" style="color:var(--ink-50)">SU #${e.token_id}</span>
-      <span class="dt">${txt}</span></li>`;
+    return `<tr><td><span class="pill">${e.name}</span></td>
+      <td class="mono">#${e.token_id}</td>
+      <td style="color:var(--ink-50)">${txt}</td>
+      <td class="mono" style="color:var(--ink-40)">${e.ts}</td></tr>`;
   }).join("");
   ensureEntered("page-audit");
 }
