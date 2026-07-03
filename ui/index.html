@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>iMarine SU Exchange</title>
+<link rel="icon" href="data:," />
 <link rel="stylesheet" href="liquid-glass.css" />
 <style>
 /* ── tokens ── */
@@ -70,9 +71,6 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
 #health-chip.ok .led{background:var(--lg-accent);}
 
 /* ── hero（空狀態）── */
-.hero{min-height:56vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
-.hero h1{margin:0;font-size:clamp(44px,7vw,88px);font-weight:700;letter-spacing:-.04em;line-height:.95;}
-.hero .sub{margin:26px 0 34px;max-width:34rem;color:var(--ink-60);font-size:16px;line-height:1.6;}
 .shiny{background:linear-gradient(90deg,#7a5c1c 0%,#E9BC63 28%,#fff3d0 50%,#E9BC63 72%,#7a5c1c 100%);
   background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
   animation:shiny 6s linear infinite;filter:url(#ime-noise);}
@@ -80,26 +78,58 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
 @media(prefers-reduced-motion:reduce){.shiny{animation:none;}}
 /* ── 儀表板格線 ── */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
-.duo{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:stretch;}
-.gauges{display:flex;flex-direction:column;gap:16px;justify-content:space-between;}
+#stat-band{margin-bottom:20px;}
 .lg-stat__value{letter-spacing:-.03em;}
-@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}.duo{grid-template-columns:1fr;}}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}}
 
-/* ── 市場 ── */
-.market{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;}
-.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
-.su-card .lg-card__title{display:flex;justify-content:space-between;align-items:baseline;}
-.su-card .price{font-size:20px;letter-spacing:-.02em;}
+/* ── 工作台 ── */
+.workbench{display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:start;}
+.rail{position:sticky;top:104px;display:flex;flex-direction:column;gap:18px;padding:18px;border-radius:16px;}
+.rail-group{display:flex;flex-direction:column;gap:8px;}
+.rail-h{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-40);font-weight:600;}
+.fchip{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--hair);border-radius:10px;
+  background:none;color:var(--ink-60);font-size:13px;cursor:pointer;text-align:left;font-family:inherit;
+  transition:color .25s var(--ease),border-color .25s var(--ease);}
+.fchip:hover{color:var(--ink-90);border-color:rgba(255,255,255,.25);}
+.fchip.is-on{color:var(--lg-accent);border-color:var(--lg-accent);}
+.fchip .n{margin-left:auto;font-size:11px;color:var(--ink-40);}
+.rail select,.wb-toolbar select{background:rgba(255,255,255,.06);border:1px solid var(--hair);border-radius:10px;
+  color:var(--ink-90);padding:8px 10px;font-size:13px;font-family:inherit;}
+.rail select:focus,.wb-toolbar select:focus{outline:1px solid var(--lg-accent);}
+.rail select option{background:#0a0f16;}
+#f-count{margin:0;font-size:12px;color:var(--ink-50);}
+.wb-toolbar{display:flex;align-items:center;gap:10px;margin:0 0 14px;}
+.su-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+.su-card{cursor:pointer;}
+.su-card .su-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px;}
+.su-card .price,.su-card .tonnes{font-size:22px;letter-spacing:-.02em;font-weight:600;}
+.su-card .su-sub{color:var(--ink-50);font-size:12px;margin-bottom:10px;}
 .su-card .meta-row{display:flex;justify-content:space-between;color:var(--ink-50);font-size:12px;margin:2px 0;}
-.side-list{list-style:none;margin:0;padding:0;}
-.side-list li{display:flex;align-items:center;justify-content:space-between;gap:8px;
-  padding:9px 4px;border-bottom:1px solid var(--hair);font-size:13px;}
 .empty-note{color:var(--ink-40);font-size:13px;padding:22px;text-align:center;}
-@media(max-width:900px){.market{grid-template-columns:1fr;}}
+.genesis{max-width:34rem;margin:8vh auto;text-align:center;padding:36px 30px;}
+@media(max-width:900px){.workbench{grid-template-columns:1fr;}.rail{position:static;}}
+
+/* ── SU 詳情 drawer ── */
+.drawer{position:fixed;inset:0;z-index:55;}
+.drawer__overlay{position:absolute;inset:0;background:rgba(4,8,13,.55);}
+.drawer__panel{position:absolute;top:0;right:0;bottom:0;width:min(420px,92vw);
+  padding:22px;overflow-y:auto;border-left:1px solid var(--hair);
+  background:rgba(10,15,22,.94);display:flex;flex-direction:column;gap:16px;
+  transform:translateX(16px);opacity:0;transition:transform .35s var(--ease),opacity .35s var(--ease);}
+.drawer.is-open .drawer__panel{transform:none;opacity:1;}
+.drawer__head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+#d-info .meta-row{display:flex;justify-content:space-between;align-items:center;
+  color:var(--ink-50);font-size:13px;padding:7px 0;border-bottom:1px solid var(--hair);}
+#d-info .meta-row > :last-child{color:var(--ink-90);}
+.d-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.copy{background:none;border:none;color:var(--ink-90);cursor:pointer;font-size:12.5px;padding:0;}
+.copy:hover{color:var(--lg-accent);}
+@media(prefers-reduced-motion:reduce){.drawer__panel{transition:none;}}
 
 /* ── 稽核 ── */
-.audit{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;}
-.scrolly{max-height:64vh;overflow-y:auto;}
+.audit{display:flex;flex-direction:column;gap:16px;}
+.scrolly{max-height:48vh;overflow-y:auto;}
+.evchips{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap;}
 .feed{list-style:none;margin:0;padding:0;font-size:12.5px;max-height:64vh;overflow-y:auto;}
 .feed li{padding:8px 4px;border-bottom:1px solid var(--hair);}
 .feed .nm{color:var(--ink-90);font-weight:600;margin-right:6px;}
@@ -112,7 +142,6 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
 .verdict.ok{color:var(--lg-accent);border:1px solid var(--lg-accent);}
 .verdict.bad{color:#ff7a7a;border:1px solid #ff7a7a;}
 .hash-ok{color:var(--lg-accent);} .hash-bad{color:#ff7a7a;}
-@media(max-width:900px){.audit{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -136,66 +165,70 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
       <span class="lg-navbar__brand brand"><b>iMarine SU Exchange</b><span>TCX 海運合規專區 PoC</span></span>
       <div class="lg lg-tabs" data-lg role="tablist" id="nav-tabs">
         <span class="lg-tabs__pill"></span>
-        <button class="lg-tabs__tab is-active" role="tab" data-page="dashboard">儀表板</button>
-        <button class="lg-tabs__tab" role="tab" data-page="market">市場</button>
+        <button class="lg-tabs__tab is-active" role="tab" data-page="workbench">工作台</button>
         <button class="lg-tabs__tab" role="tab" data-page="audit">稽核</button>
       </div>
       <span class="lg-navbar__spacer"></span>
       <span class="lg-chip" id="health-chip"><span class="led"></span><span id="health-text">連線中…</span></span>
+      <button class="lg lg-btn lg-btn--sm lg-btn--primary" data-lg id="btn-issue-nav" data-lg-open="#m-issue" disabled>批次發行</button>
     </nav>
   </div>
 
   <main class="wrap">
-    <section class="page active" id="page-dashboard">
-      <div id="dash-hero" class="hero anim">
-        <h1>船隊超額減碳<br><span class="shiny">414,312 噸</span></h1>
-        <p class="sub">108 筆 iMarine 核發請求已完成 GFI 驗證，正待鑄造為可稽核的 Surplus Unit（ERC-721）。</p>
-        <button class="lg lg-btn lg-btn--pill lg-btn--lg lg-btn--primary" data-lg data-lg-open="#m-issue" data-needs-backend>批次發行上鏈</button>
+    <div class="stats" id="stat-band">
+      <div class="lg lg-stat" data-lg><span class="lg-stat__label">累計發行 SU</span>
+        <div class="lg-stat__row"><span class="lg-stat__value" id="stat-issued" data-lg-value="0"></span></div></div>
+      <div class="lg lg-stat" data-lg><span class="lg-stat__label">總減碳噸數</span>
+        <div class="lg-stat__row"><span class="lg-stat__value gold" id="stat-tonnes" data-lg-value="0" data-lg-suffix=" t"></span></div></div>
+      <div class="lg lg-stat" data-lg><span class="lg-stat__label">已交易</span>
+        <div class="lg-stat__row"><span class="lg-stat__value" id="stat-traded" data-lg-value="0"></span></div></div>
+      <div class="lg lg-stat" data-lg><span class="lg-stat__label">已除役</span>
+        <div class="lg-stat__row"><span class="lg-stat__value" id="stat-retired" data-lg-value="0"></span></div></div>
+    </div>
+    <section class="page active" id="page-workbench">
+      <div id="wb-genesis" class="lg-static lg-card genesis anim" hidden>
+        <h1 style="margin:0 0 12px;font-size:clamp(28px,3.4vw,38px);letter-spacing:-.03em;line-height:1.1">
+          船隊超額減碳 <span class="shiny">414,312 噸</span></h1>
+        <p style="color:var(--ink-60);font-size:14px;line-height:1.7;margin:0 0 22px">
+          108 筆 iMarine 核發請求已完成 GFI 驗證，正待鑄造為可稽核的 Surplus Unit（ERC-721）。</p>
+        <button class="lg lg-btn lg-btn--pill lg-btn--primary" data-lg data-lg-open="#m-issue" data-needs-backend>批次發行上鏈</button>
       </div>
-      <div id="dash-main" hidden>
-        <div class="eyebrow anim"><span class="dot"></span><span class="lbl">Overview</span><span class="tag" id="dash-tag">–</span></div>
-        <div class="stats">
-          <div class="lg lg-stat anim" data-lg><span class="lg-stat__label">累計發行 SU</span>
-            <div class="lg-stat__row"><span class="lg-stat__value" id="stat-issued" data-lg-value="0"></span></div></div>
-          <div class="lg lg-stat anim" data-lg><span class="lg-stat__label">總減碳噸數</span>
-            <div class="lg-stat__row"><span class="lg-stat__value gold" id="stat-tonnes" data-lg-value="0" data-lg-suffix=" t"></span></div></div>
-          <div class="lg lg-stat anim" data-lg><span class="lg-stat__label">已交易</span>
-            <div class="lg-stat__row"><span class="lg-stat__value" id="stat-traded" data-lg-value="0"></span></div></div>
-          <div class="lg lg-stat anim" data-lg><span class="lg-stat__label">已除役</span>
-            <div class="lg-stat__row"><span class="lg-stat__value" id="stat-retired" data-lg-value="0"></span></div></div>
-        </div>
-        <div class="duo">
-          <div class="lg lg-chart anim" data-lg>
-            <div class="lg-chart__head"><h4 class="lg-chart__title">船舶減碳排行（噸）</h4></div>
-            <svg class="lg-chart__svg" id="chart-ships" data-lg-chart="bar" data-lg-points="0" data-lg-labels="-"></svg>
+      <div class="workbench" id="wb-main" hidden>
+        <aside class="lg-static rail anim">
+          <div class="rail-group"><b class="rail-h">狀態</b>
+            <button class="fchip" data-fs="held">持有中<span class="n" data-n="held"></span></button>
+            <button class="fchip" data-fs="listed">掛單中<span class="n" data-n="listed"></span></button>
+            <button class="fchip" data-fs="retired">已除役<span class="n" data-n="retired"></span></button>
           </div>
-          <div class="gauges">
-            <div class="lg lg-gauge anim" data-lg data-lg-profile="circle" id="gauge-traded" data-lg-value="0" data-lg-unit="%" data-lg-label="交易率"></div>
-            <div class="lg lg-gauge anim" data-lg data-lg-profile="circle" id="gauge-retired" data-lg-value="0" data-lg-unit="%" data-lg-label="除役率"></div>
+          <div class="rail-group"><b class="rail-h">持有者</b>
+            <button class="fchip" data-fr="shipping">航商</button>
+            <button class="fchip" data-fr="buyer">買家</button>
           </div>
-        </div>
-      </div>
-    </section>
-    <section class="page" id="page-market">
-      <div class="market">
+          <div class="rail-group"><b class="rail-h">船舶</b>
+            <select id="f-ship"><option value="">全部船舶</option></select>
+          </div>
+          <button class="lg lg-btn lg-btn--sm" data-lg id="f-clear">清除篩選</button>
+          <p id="f-count" class="mono">顯示 0 / 0 筆</p>
+        </aside>
         <div>
-          <div class="eyebrow anim"><span class="dot"></span><span class="lbl">掛單牆</span><span class="tag" id="wall-tag">0 筆掛單中</span></div>
-          <div class="wall" id="listing-wall"></div>
-          <div class="empty-note" id="wall-empty">尚無掛單——從右側「航商持有」上架第一張 SU。</div>
-        </div>
-        <div>
-          <div class="lg lg-card anim" data-lg style="margin-bottom:14px">
-            <div class="eyebrow"><span class="dot"></span><span class="lbl">航商持有</span><span class="tag" id="held-ship-tag">0</span></div>
-            <ul class="side-list" id="held-shipping"></ul>
+          <div class="wb-toolbar anim">
+            <div class="eyebrow" style="margin:0;flex:1"><span class="dot"></span><span class="lbl">SU 資產</span><span class="tag" id="wb-tag">0 筆</span></div>
+            <select id="wb-sort">
+              <option value="id">排序：Token ID</option>
+              <option value="tonnes">排序：噸數</option>
+              <option value="price">排序：價格（掛單優先）</option>
+            </select>
           </div>
-          <div class="lg lg-card anim" data-lg>
-            <div class="eyebrow"><span class="dot"></span><span class="lbl">買家持有</span><span class="tag" id="held-buyer-tag">0</span></div>
-            <ul class="side-list" id="held-buyer"></ul>
-          </div>
+          <div class="su-grid" id="su-grid"></div>
+          <div class="empty-note" id="wb-empty" hidden>無符合篩選的 SU——調整左側條件或清除篩選。</div>
         </div>
       </div>
     </section>
     <section class="page" id="page-audit">
+      <div class="lg lg-chart anim" data-lg style="margin-bottom:16px">
+        <div class="lg-chart__head"><h4 class="lg-chart__title">船舶減碳排行（噸）</h4></div>
+        <svg class="lg-chart__svg" id="chart-ships" data-lg-chart="bar" data-lg-points="0" data-lg-labels="-"></svg>
+      </div>
       <div class="audit">
         <div class="lg lg-card anim" data-lg>
           <div class="eyebrow"><span class="dot"></span><span class="lbl">SU 帳本全表</span><span class="tag" id="audit-tag">0 筆</span></div>
@@ -206,12 +239,39 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
           </div>
         </div>
         <div class="lg lg-card anim" data-lg>
-          <div class="eyebrow"><span class="dot"></span><span class="lbl">事件流</span><span class="tag">on-chain events</span></div>
-          <ul class="feed" id="event-feed" data-lg-scroll-edge="both"></ul>
+          <div class="eyebrow"><span class="dot"></span><span class="lbl">事件表</span><span class="tag" id="ev-tag">0 則</span></div>
+          <div class="evchips" id="ev-chips">
+            <button class="fchip" data-ev="Issued">Issued</button>
+            <button class="fchip" data-ev="Listed">Listed</button>
+            <button class="fchip" data-ev="Sold">Sold</button>
+            <button class="fchip" data-ev="Retired">Retired</button>
+          </div>
+          <div class="scrolly" data-lg-scroll-edge="both">
+            <table class="hairline"><thead><tr>
+              <th>事件</th><th>SU</th><th>明細</th><th>時間</th>
+            </tr></thead><tbody id="ev-tbody"></tbody></table>
+          </div>
         </div>
       </div>
     </section>
   </main>
+
+  <!-- SU 詳情 drawer -->
+  <div class="drawer" id="su-drawer" hidden>
+    <div class="drawer__overlay" id="drawer-overlay"></div>
+    <aside class="lg-static drawer__panel" role="dialog" aria-label="SU 詳情">
+      <div class="drawer__head">
+        <div class="eyebrow" style="margin:0"><span class="dot"></span><span class="lbl">SU 詳情</span><span class="tag mono" id="d-token">SU #-</span></div>
+        <button class="lg lg-btn lg-btn--sm" data-lg id="drawer-close">關閉</button>
+      </div>
+      <div id="d-info"></div>
+      <div class="d-actions" id="d-actions"></div>
+      <div class="eyebrow" style="margin:0"><span class="dot"></span><span class="lbl">防竄改驗證</span></div>
+      <div id="d-verify"></div>
+      <div class="eyebrow" style="margin:0"><span class="dot"></span><span class="lbl">事件 Timeline</span></div>
+      <ul class="feed" id="d-timeline" style="max-height:none"></ul>
+    </aside>
+  </div>
 
   <!-- modals（Task 3–6 追加於此） -->
   <div id="modals">
@@ -270,16 +330,6 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
           <button class="lg lg-btn" data-lg data-lg-close>取消</button>
           <button class="lg lg-btn lg-btn--primary" data-lg id="btn-retire-go">確認除役</button>
-        </div>
-      </div>
-    </div>
-    <div class="lg-modal" id="m-verify">
-      <div class="lg-modal__overlay" data-lg-close></div>
-      <div class="lg-modal__panel lg" data-lg role="dialog" aria-label="防竄改驗證" style="max-width:34rem">
-        <div class="eyebrow"><span class="dot"></span><span class="lbl">防竄改驗證</span><span class="tag mono" id="verify-token">SU #-</span></div>
-        <div id="verify-body"><p style="color:var(--ink-50)">驗證中——讀取鏈上 dataHash 並對鏈下明細重算 keccak…</p></div>
-        <div style="display:flex;justify-content:flex-end;margin-top:14px">
-          <button class="lg lg-btn" data-lg data-lg-close>關閉</button>
         </div>
       </div>
     </div>
@@ -344,7 +394,7 @@ function derivePrices(events){
 let pollTimer = null;
 async function refresh(){
   try{
-    const [st, ev] = await Promise.all([api("/state"), api("/events?limit=200")]);
+    const [st, ev] = await Promise.all([api("/state"), api("/events?limit=1000")]);
     S.sus = st.sus; S.roles = st.roles; S.events = ev; S.prices = derivePrices(ev);
     setOnline(true);
   }catch(_){ setOnline(false); }
@@ -360,9 +410,10 @@ function setOnline(ok){
   document.querySelectorAll("[data-needs-backend]").forEach(b=>b.disabled = !ok);
 }
 function renderAll(){
-  if (typeof renderDashboard === "function") renderDashboard();
-  if (typeof renderMarket === "function") renderMarket();
+  if (typeof renderStats === "function") renderStats();
+  if (typeof renderWorkbench === "function") renderWorkbench();
   if (typeof renderAudit === "function") renderAudit();
+  if (typeof renderDrawer === "function") renderDrawer();
   // 動態重繪出來的按鈕要補套離線 disable（setOnline 只處理當下存在的節點）
   document.querySelectorAll("[data-needs-backend]").forEach(b=>b.disabled = !S.online);
 }
@@ -416,33 +467,18 @@ function switchPage(name){
 }
 document.querySelectorAll("#nav-tabs .lg-tabs__tab").forEach(t=>
   t.addEventListener("click",()=>switchPage(t.dataset.page)));
-switchPage("dashboard");
+switchPage("workbench");
 
-/* ── 儀表板 ── */
-function renderDashboard(){
-  const has = S.sus.length > 0;   // 防重複發行：發行後 hero（唯一發行入口）即消失（spec §10.6）
-  document.getElementById("dash-hero").hidden = has;
-  document.getElementById("dash-main").hidden = !has;
-  if (!has){ ensureEntered("page-dashboard"); return; }
-
+/* ── 常駐統計帶 + navbar 發行鈕 ── */
+function renderStats(){
+  const has = S.sus.length > 0;
   const tonnes = S.sus.reduce((s,u)=>s+u.amount,0);
-  const traded = S.sus.filter(u=>u.owner_role==="buyer").length;   // 含已除役（Sold 後 owner=買家）
-  const retired = S.sus.filter(u=>u.status==="retired").length;
   setVal("stat-issued", S.sus.length); setVal("stat-tonnes", tonnes);
-  setVal("stat-traded", traded); setVal("stat-retired", retired);
-  document.getElementById("dash-tag").textContent = fmt(S.sus.length)+" SU on-chain";
-  setVal("gauge-traded", Math.round(traded/S.sus.length*100));
-  setVal("gauge-retired", Math.round(retired/S.sus.length*100));
-
-  const byShip = {};
-  S.sus.forEach(u=>byShip[u.ship_id]=(byShip[u.ship_id]||0)+u.amount);
-  const top = Object.entries(byShip).sort((a,b)=>b[1]-a[1]).slice(0,12);
-  const chart = document.getElementById("chart-ships");
-  const pts = top.map(t=>t[1]).join(","), lbl = top.map(t=>"…"+String(t[0]).slice(-3)).join(",");
-  if (chart.getAttribute("data-lg-points") !== pts){
-    chart.setAttribute("data-lg-points", pts); chart.setAttribute("data-lg-labels", lbl);
-  }
-  ensureEntered("page-dashboard");
+  setVal("stat-traded", S.sus.filter(u=>u.owner_role==="buyer").length);   // 含已除役（Sold 後 owner=買家）
+  setVal("stat-retired", S.sus.filter(u=>u.status==="retired").length);
+  const b = document.getElementById("btn-issue-nav");
+  b.disabled = !S.online || has;                 // 防重複發行：發行後常駐 disabled（spec §3）
+  b.textContent = has ? "已發行" : "批次發行";
 }
 function setVal(id, v){
   const el = document.getElementById(id);
@@ -461,60 +497,221 @@ document.getElementById("btn-issue-go").addEventListener("click", async e=>{
   setBusy(e.target, false);
 });
 
-/* ── 市場 ── */
-const wallCards = new Map();   // token_id -> card el
-function cardFor(u){
+/* ── 工作台 ── */
+const F = {status:new Set(), roles:new Set(), ship:"", sort:"id"};
+const STATUS_TEXT = {held:"持有中", listed:"掛單中", retired:"已除役"};
+const ROLE_TEXT = {shipping:"航商", buyer:"買家"};
+
+document.querySelectorAll(".fchip[data-fs]").forEach(b=>b.addEventListener("click",()=>{
+  b.classList.toggle("is-on");
+  b.classList.contains("is-on") ? F.status.add(b.dataset.fs) : F.status.delete(b.dataset.fs);
+  renderWorkbench();
+}));
+document.querySelectorAll(".fchip[data-fr]").forEach(b=>b.addEventListener("click",()=>{
+  b.classList.toggle("is-on");
+  b.classList.contains("is-on") ? F.roles.add(b.dataset.fr) : F.roles.delete(b.dataset.fr);
+  renderWorkbench();
+}));
+document.getElementById("f-ship").addEventListener("change", e=>{ F.ship = e.target.value; renderWorkbench(); });
+document.getElementById("wb-sort").addEventListener("change", e=>{ F.sort = e.target.value; renderWorkbench(); });
+document.getElementById("f-clear").addEventListener("click", ()=>{
+  F.status.clear(); F.roles.clear(); F.ship = "";
+  document.querySelectorAll(".fchip[data-fs],.fchip[data-fr]").forEach(b=>b.classList.remove("is-on"));
+  document.getElementById("f-ship").value = "";
+  renderWorkbench();
+});
+
+function filteredSus(){
+  return S.sus.filter(u=>
+    (!F.status.size || F.status.has(u.status)) &&
+    (!F.roles.size  || F.roles.has(u.owner_role)) &&
+    (!F.ship || String(u.ship_id) === F.ship));
+}
+function sortedSus(list){
+  const l = [...list];
+  if (F.sort === "tonnes") l.sort((a,b)=>b.amount-a.amount);
+  else if (F.sort === "price") l.sort((a,b)=>{
+    const pa = a.status==="listed" ? (S.prices[a.token_id] ?? Infinity) : null;
+    const pb = b.status==="listed" ? (S.prices[b.token_id] ?? Infinity) : null;
+    if (pa!==null && pb!==null) return pa-pb;   // 掛單中在前、價格升冪
+    if (pa!==null) return -1;
+    if (pb!==null) return 1;
+    return b.amount-a.amount;                   // 未掛單在後、噸數降冪
+  });
+  else l.sort((a,b)=>a.token_id-b.token_id);
+  return l;
+}
+
+/* 卡片兩型：掛單中=折射（attach+revive）、其他=lg-static 磨砂（108 張全折射會拖垮效能） */
+const gridCards = new Map();   // token_id -> {el, variant}
+function suCard(u){
+  const listed = u.status === "listed";
   const el = document.createElement("div");
-  el.className = "lg lg-card su-card";
-  el.setAttribute("data-lg","");
+  el.className = listed ? "lg lg-card su-card" : "lg-static lg-card su-card";
+  if (listed) el.setAttribute("data-lg","");
   el.innerHTML = `
-    <h4 class="lg-card__title"><span>SU #${u.token_id}</span><span class="lg-chip">航商掛單</span></h4>
-    <div class="meta-row"><span>船舶</span><span class="mono">${imo(u.ship_id)}</span></div>
-    <div class="meta-row"><span>減碳量</span><span class="mono gold" data-f="amount">${fmt(u.amount)} t</span></div>
-    <div class="meta-row"><span>dataHash</span><span class="mono">${shortHash(u.data_hash)}</span></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
-      <span class="price mono gold" data-f="price"></span>
-      <button class="lg lg-btn lg-btn--sm lg-btn--accent" data-lg data-token="${u.token_id}"
-        data-lg-open="#m-buy" data-needs-backend>購買</button>
-    </div>`;
+    <div class="su-top">${listed
+      ? `<span class="price mono gold" data-f="price"></span>`
+      : `<span class="tonnes mono gold">${fmt(u.amount)} t</span>`}
+      <span class="pill ${u.status}">${STATUS_TEXT[u.status]}</span></div>
+    <div class="su-sub mono">SU #${u.token_id} · ${imo(u.ship_id)}</div>
+    ${listed ? `<div class="meta-row"><span>減碳量</span><span class="mono">${fmt(u.amount)} t</span></div>` : ""}
+    <div class="meta-row"><span>持有者</span><span data-f="owner">${ROLE_TEXT[u.owner_role] ?? "-"}</span></div>
+    ${u.status==="retired" ? `<div class="meta-row"><span>用途</span><span>${u.purpose_name ?? "-"}</span></div>` : ""}
+    <div class="meta-row"><span>dataHash</span><span class="mono">${shortHash(u.data_hash)}</span></div>`;
+  el.addEventListener("click", e=>{
+    if (typeof openDrawer === "function") openDrawer(u.token_id); // Task 3 定義
+  });
   return el;
 }
-function renderMarket(){
-  const listed = S.sus.filter(u=>u.status==="listed");
-  const wall = document.getElementById("listing-wall");
-  const seen = new Set();
-  let added = false;
-  listed.forEach(u=>{
-    seen.add(u.token_id);
-    let el = wallCards.get(u.token_id);
-    if (!el){
-      el = cardFor(u); wallCards.set(u.token_id, el); wall.appendChild(el);
-      LiquidGlass.attach(el); el.querySelectorAll("[data-lg]").forEach(c=>LiquidGlass.attach(c));
-      added = true;
-    }
-    const p = S.prices[u.token_id];
-    el.querySelector('[data-f="price"]').textContent = p !== undefined ? fmt(p)+" mUSD" : "— mUSD";
-  });
-  [...wallCards.keys()].filter(id=>!seen.has(id)).forEach(id=>{ wallCards.get(id).remove(); wallCards.delete(id); });
-  if (added) scheduleRevive();
-  document.getElementById("wall-tag").textContent = listed.length + " 筆掛單中";
-  document.getElementById("wall-empty").hidden = listed.length > 0;
+function renderWorkbench(){
+  const has = S.sus.length > 0;
+  document.getElementById("wb-genesis").hidden = has;
+  document.getElementById("wb-main").hidden = !has;
+  if (!has){ ensureEntered("page-workbench"); return; }
 
-  renderSide("held-shipping","held-ship-tag",
-    S.sus.filter(u=>u.status==="held" && u.owner_role==="shipping"),
-    u=>`<button class="lg lg-btn lg-btn--sm" data-lg data-token="${u.token_id}" data-lg-open="#m-list" data-needs-backend>上架</button>`);
-  renderSide("held-buyer","held-buyer-tag",
-    S.sus.filter(u=>u.status==="held" && u.owner_role==="buyer"),
-    u=>`<button class="lg lg-btn lg-btn--sm lg-btn--accent" data-lg data-token="${u.token_id}" data-lg-open="#m-retire" data-needs-backend>除役</button>`);
-  ensureEntered("page-market");
+  const sel = document.getElementById("f-ship");
+  const ships = [...new Set(S.sus.map(u=>u.ship_id))].sort((a,b)=>a-b);
+  if (sel.options.length !== ships.length + 1){
+    sel.innerHTML = `<option value="">全部船舶</option>` + ships.map(s=>`<option value="${s}">${imo(s)}</option>`).join("");
+    sel.value = F.ship;
+  }
+  ["held","listed","retired"].forEach(st=>{
+    document.querySelector(`[data-n="${st}"]`).textContent = S.sus.filter(u=>u.status===st).length;
+  });
+
+  const list = sortedSus(filteredSus());
+  document.getElementById("f-count").textContent = `顯示 ${list.length} / ${S.sus.length} 筆`;
+  document.getElementById("wb-tag").textContent = `${list.length} 筆`;
+  document.getElementById("wb-empty").hidden = list.length > 0;
+
+  const grid = document.getElementById("su-grid");
+  const sig = list.map(u=>u.token_id+":"+u.status).join(",");
+  if (grid.dataset.sig !== sig){                 // 集合/順序/狀態變了才動 DOM（穩態 4s 輪詢零重建）
+    grid.dataset.sig = sig;
+    let newListed = false;
+    const keep = new Set();
+    list.forEach(u=>{
+      keep.add(u.token_id);
+      let c = gridCards.get(u.token_id);
+      if (!c || c.variant !== u.status){
+        if (c) c.el.remove();
+        c = {el: suCard(u), variant: u.status};
+        gridCards.set(u.token_id, c);
+        if (u.status === "listed"){
+          LiquidGlass.attach(c.el);
+          c.el.querySelectorAll("[data-lg]").forEach(x=>LiquidGlass.attach(x));
+          newListed = true;
+        }
+      }
+      grid.appendChild(c.el);                    // 依排序順序排入（既有節點會移動）
+    });
+    [...gridCards.keys()].filter(id=>!keep.has(id)).forEach(id=>{ gridCards.get(id).el.remove(); gridCards.delete(id); });
+    if (newListed) scheduleRevive();
+  }
+  list.forEach(u=>{                              // 穩態只更新文字
+    const el = gridCards.get(u.token_id).el;
+    const p = el.querySelector('[data-f="price"]');
+    if (p) p.textContent = S.prices[u.token_id] !== undefined ? fmt(S.prices[u.token_id])+" mUSD" : "— mUSD";
+    const o = el.querySelector('[data-f="owner"]');
+    if (o) o.textContent = ROLE_TEXT[u.owner_role] ?? "-";
+  });
+  ensureEntered("page-workbench");
 }
-function renderSide(listId, tagId, items, btnHtml){
-  document.getElementById(tagId).textContent = items.length;
-  document.getElementById(listId).innerHTML = items.length
-    ? items.map(u=>`<li><span class="mono">#${u.token_id} ${imo(u.ship_id)}</span>
-        <span class="mono" style="color:var(--ink-50)">${fmt(u.amount)} t</span>${btnHtml(u)}</li>`).join("")
-    : `<li style="border:none;color:var(--ink-40)">（無）</li>`;
+
+/* ── SU 詳情 drawer ── */
+let drawerToken = null;
+function openDrawer(id){
+  drawerToken = id;
+  const d = document.getElementById("su-drawer");
+  d.hidden = false;
+  requestAnimationFrame(()=>d.classList.add("is-open"));
+  resetDrawerVerify();   // 換 token 清掉上一顆的 verify 結果
+  renderDrawer();
 }
+function closeDrawer(){
+  drawerToken = null;
+  const d = document.getElementById("su-drawer");
+  d.classList.remove("is-open"); d.hidden = true;
+}
+function drawerActions(u){
+  if (u.status==="listed") return `<button class="lg lg-btn lg-btn--accent" data-lg data-token="${u.token_id}" data-lg-open="#m-buy" data-needs-backend>以買家身分購買</button>`;
+  if (u.status==="held" && u.owner_role==="shipping") return `
+    <button class="lg lg-btn" data-lg data-token="${u.token_id}" data-lg-open="#m-list" data-needs-backend>上架掛單</button>
+    <button class="lg lg-btn" data-lg data-token="${u.token_id}" data-lg-open="#m-retire" data-needs-backend>除役銷毀</button>`;
+  if (u.status==="held" && u.owner_role==="buyer") return `<button class="lg lg-btn lg-btn--accent" data-lg data-token="${u.token_id}" data-lg-open="#m-retire" data-needs-backend>除役銷毀</button>`;
+  return "";
+}
+function renderDrawer(){
+  if (drawerToken === null) return;
+  const u = S.sus.find(x=>x.token_id === drawerToken);
+  if (!u){ closeDrawer(); return; }
+  document.getElementById("d-token").textContent = "SU #" + u.token_id;
+  const p = S.prices[u.token_id];
+  document.getElementById("d-info").innerHTML = `
+    <div class="meta-row"><span>船舶</span><span class="mono">${imo(u.ship_id)}</span></div>
+    <div class="meta-row"><span>減碳量</span><span class="mono gold">${fmt(u.amount)} t</span></div>
+    <div class="meta-row"><span>持有者</span><span>${ROLE_TEXT[u.owner_role] ?? "-"}</span></div>
+    <div class="meta-row"><span>狀態</span><span class="pill ${u.status}">${STATUS_TEXT[u.status]}</span></div>
+    ${u.status==="listed" ? `<div class="meta-row"><span>掛單價</span><span class="mono gold">${p!==undefined ? fmt(p)+" mUSD" : "—"}</span></div>` : ""}
+    ${u.status==="retired" ? `<div class="meta-row"><span>用途</span><span>${u.purpose_name ?? "-"}</span></div>` : ""}
+    <div class="meta-row"><span>dataHash</span>
+      <button class="copy mono" data-hash="${u.data_hash ?? ""}" title="點擊複製完整 hash">${shortHash(u.data_hash)}</button></div>`;
+  document.getElementById("d-actions").innerHTML = drawerActions(u);
+  const evs = S.events.filter(e=>e.token_id === u.token_id);
+  document.getElementById("d-timeline").innerHTML = evs.length ? evs.map(e=>{
+    let d = {}; try{ d = JSON.parse(e.detail); }catch(_){}
+    const txt = (EVENT_TEXT[e.name] || (()=>e.detail))(d);
+    return `<li><span class="ts mono">${e.ts}</span><span class="nm">${e.name}</span><span class="dt">${txt}</span></li>`;
+  }).join("") : `<li style="border:none;color:var(--ink-40)">（尚無事件）</li>`;
+  document.querySelectorAll("#su-drawer [data-needs-backend]").forEach(b=>b.disabled = !S.online);
+}
+document.getElementById("drawer-close").addEventListener("click", closeDrawer);
+document.getElementById("drawer-overlay").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", e=>{
+  if (e.key === "Escape" && drawerToken !== null && !document.querySelector(".lg-modal.is-open")) closeDrawer();
+});
+document.addEventListener("click", e=>{
+  const c = e.target.closest(".copy[data-hash]");
+  if (!c || !c.dataset.hash) return;
+  navigator.clipboard?.writeText(c.dataset.hash).then(()=>toastOk("已複製", "完整 dataHash 已複製到剪貼簿"));
+});
+
+/* ── verify（drawer 內，防連點錯序） ── */
+let verifySeq = 0;
+function resetDrawerVerify(){
+  document.getElementById("d-verify").innerHTML =
+    `<button class="lg lg-btn lg-btn--sm" data-lg id="btn-verify" data-needs-backend ${S.online?"":"disabled"}>驗證 dataHash</button>`;
+}
+document.addEventListener("click", async e=>{
+  if (!e.target.closest("#btn-verify")) return;
+  const id = drawerToken, seq = ++verifySeq;
+  const box = document.getElementById("d-verify");
+  box.innerHTML = `<p style="color:var(--ink-50);font-size:13px;margin:0">驗證中——讀取鏈上 dataHash 並對鏈下明細重算 keccak…</p>`;
+  const again = `<button class="lg lg-btn lg-btn--sm" data-lg id="btn-verify" data-needs-backend style="margin-top:10px">重新驗證</button>`;
+  try{
+    const v = await api("/verify/" + id);
+    if (seq !== verifySeq || drawerToken !== id) return;   // 過期回應丟棄（以最後點擊為準）
+    const cls = v.match ? "hash-ok" : "hash-bad";
+    box.innerHTML = `
+      <div class="verdict ${v.match ? "ok" : "bad"}">${v.match ? "MATCH — 鏈下明細未遭竄改" : "MISMATCH — 鏈下明細與鏈上指紋不符"}</div>
+      <div class="hashes mono">
+        <div class="row"><b>on-chain dataHash</b><span class="val">${v.onchain_hash ?? "-"}</span></div>
+        <div class="row"><b>recomputed keccak</b><span class="val ${cls}">${v.recomputed_hash ?? "-"}</span></div>
+        <div class="row"><b>off-chain uri</b><span class="val" style="color:var(--ink-50)">${v.uri ?? "-"}</span></div>
+      </div>${again}`;
+  }catch(err){
+    if (seq !== verifySeq || drawerToken !== id) return;
+    box.innerHTML = `<p style="color:#ff7a7a;font-size:13px;margin:0">驗證失敗：${err.message}</p>${again}`;
+  }
+});
+/* 稽核列尾「驗證」：開 drawer 並自動觸發 */
+document.addEventListener("click", e=>{
+  const t = e.target.closest("[data-open-drawer]");
+  if (!t) return;
+  openDrawer(Number(t.dataset.openDrawer));
+  document.getElementById("btn-verify")?.click();
+});
 
 /* 開 modal 時帶入 SU 摘要 */
 document.addEventListener("click", e=>{
@@ -585,7 +782,21 @@ const EVENT_TEXT = {
   Unlisted:() => "撤下掛單",
   Retired: d => `除役用途 ${d.purpose}`,
 };
+const EF = new Set();   // 空 = 全部（含 Unlisted）
+document.querySelectorAll("#ev-chips .fchip").forEach(b=>b.addEventListener("click", ()=>{
+  b.classList.toggle("is-on");
+  b.classList.contains("is-on") ? EF.add(b.dataset.ev) : EF.delete(b.dataset.ev);
+  renderAudit();
+}));
 function renderAudit(){
+  const byShip = {};
+  S.sus.forEach(u=>byShip[u.ship_id]=(byShip[u.ship_id]||0)+u.amount);
+  const top = Object.entries(byShip).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const chart = document.getElementById("chart-ships");
+  const pts = top.map(t=>t[1]).join(","), lbl = top.map(t=>"…"+String(t[0]).slice(-3)).join(",");
+  if (chart.getAttribute("data-lg-points") !== pts){
+    chart.setAttribute("data-lg-points", pts); chart.setAttribute("data-lg-labels", lbl);
+  }
   document.getElementById("audit-tag").textContent = fmt(S.sus.length)+" 筆";
   document.getElementById("su-tbody").innerHTML = S.sus.map(u=>`
     <tr>
@@ -595,42 +806,21 @@ function renderAudit(){
       <td>${u.owner_role ?? "-"}</td>
       <td><span class="pill ${u.status}">${u.status}</span></td>
       <td style="color:var(--ink-50)">${u.purpose_name ?? "-"}</td>
-      <td><button class="lg lg-btn lg-btn--sm" data-lg data-token="${u.token_id}"
-        data-lg-open="#m-verify" data-needs-backend>驗證</button></td>
+      <td><button class="lg lg-btn lg-btn--sm" data-lg data-open-drawer="${u.token_id}" data-needs-backend>驗證</button></td>
     </tr>`).join("");
-  document.getElementById("event-feed").innerHTML = S.events.map(e=>{
+  const evs = S.events.filter(e=>!EF.size || EF.has(e.name));
+  document.getElementById("ev-tag").textContent = fmt(evs.length) + " 則";
+  document.getElementById("ev-tbody").innerHTML = evs.map(e=>{
     let d = {}; try{ d = JSON.parse(e.detail); }catch(_){}
     const txt = (EVENT_TEXT[e.name] || (()=>e.detail))(d);
-    return `<li><span class="ts mono">${e.ts}</span><span class="nm">${e.name}</span>
-      <span class="mono" style="color:var(--ink-50)">SU #${e.token_id}</span>
-      <span class="dt">${txt}</span></li>`;
+    return `<tr><td><span class="pill">${e.name}</span></td>
+      <td class="mono">#${e.token_id}</td>
+      <td style="color:var(--ink-50)">${txt}</td>
+      <td class="mono" style="color:var(--ink-40)">${e.ts}</td></tr>`;
   }).join("");
   ensureEntered("page-audit");
 }
 
-/* verify：開 modal 即打 API */
-document.addEventListener("click", async e=>{
-  const t = e.target.closest('[data-lg-open="#m-verify"][data-token]');
-  if (!t) return;
-  const id = Number(t.dataset.token);
-  document.getElementById("verify-token").textContent = "SU #"+id;
-  const body = document.getElementById("verify-body");
-  body.innerHTML = `<p style="color:var(--ink-50)">驗證中——讀取鏈上 dataHash 並對鏈下明細重算 keccak…</p>`;
-  try{
-    const v = await api("/verify/"+id);
-    const cls = v.match ? "hash-ok" : "hash-bad";
-    body.innerHTML = `
-      <div class="verdict ${v.match ? "ok" : "bad"}">${v.match ? "MATCH — 鏈下明細未遭竄改" : "MISMATCH — 鏈下明細與鏈上指紋不符"}</div>
-      <div class="hashes mono">
-        <div class="row"><b>on-chain dataHash</b><span class="val">${v.onchain_hash ?? "-"}</span></div>
-        <div class="row"><b>recomputed keccak</b><span class="val ${cls}">${v.recomputed_hash ?? "-"}</span></div>
-        <div class="row"><b>off-chain uri</b><span class="val" style="color:var(--ink-50)">${v.uri ?? "-"}</span></div>
-      </div>
-      ${v.detail ? `<p style="font-size:12.5px;color:var(--ink-50)">${v.detail}</p>` : ""}`;
-  }catch(err){
-    body.innerHTML = `<p style="color:#ff7a7a">驗證失敗：${err.message}</p>`;
-  }
-});
 </script>
 </body>
 </html>
