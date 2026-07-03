@@ -79,10 +79,8 @@ html,body{margin:0;background:#070b11;color:var(--ink-90);
 /* ── 儀表板格線 ── */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
 #stat-band{margin-bottom:20px;}
-.duo{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:stretch;}
-.gauges{display:flex;flex-direction:column;gap:16px;justify-content:space-between;}
 .lg-stat__value{letter-spacing:-.03em;}
-@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}.duo{grid-template-columns:1fr;}}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}}
 
 /* ── 工作台 ── */
 .workbench{display:grid;grid-template-columns:240px 1fr;gap:16px;align-items:start;}
